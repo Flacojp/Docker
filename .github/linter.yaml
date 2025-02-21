@@ -1,0 +1,27 @@
+name: Lint Docs
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install linter
+      run: |
+        python -m pip install --upgrade pip
+        pip install doc8
+
+    - name: Lint docs
+      run: doc8 docs/
