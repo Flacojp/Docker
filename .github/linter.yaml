@@ -24,4 +24,4 @@ jobs:
         pip install doc8
 
     - name: Lint docs
-      run: doc8 docs/
+      run: doc8 homer/
