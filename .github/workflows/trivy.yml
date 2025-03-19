@@ -1,4 +1,4 @@
-name: Docker Image Scanning
+name: Docker Image Scanning with Trivy!
 
 on:
   push:
