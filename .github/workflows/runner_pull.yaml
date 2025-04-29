@@ -16,5 +16,5 @@ jobs:
 
     - name: Pull latest changes
       run: |
-        cd /path/to/docker/repo
+        cd /home/razcj/Docker
         git pull --ff-only origin ${{ github.ref }}
