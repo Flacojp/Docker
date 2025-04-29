@@ -1,0 +1,20 @@
+name: self-hosted runner pull 
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  
+jobs:
+  pull-repo:
+    runs-on: self-hosted
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Pull latest changes
+      run: |
+        cd /path/to/docker/repo
+        git pull --ff-only origin ${{ github.ref }}
