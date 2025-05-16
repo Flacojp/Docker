@@ -20,3 +20,5 @@ To get started with Docker Compose, follow these steps:
 ## Directory Structure
 
 ##All changes pushed to flacojp slack
+
+self-hosted runner will pick up and clone the repo
