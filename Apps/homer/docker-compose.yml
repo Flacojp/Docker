@@ -3,7 +3,7 @@ services:
     image: b4bz/homer
     container_name: homer
     volumes:
-      - /path/to/config/dir:/www/assets # Make sure your local config directory exists
+      - /www:/www/assets # Make sure your local config directory exists
     ports:
       - 8080:8080
     user: 1000:1000 # default
