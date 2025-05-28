@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Send notification to Slack
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_URL: 'https://hooks.slack.com/services/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'
         run: |
           curl -X POST -H 'Content-type: application/json' \
             --data '{"text":"A push event occurred on branch ${{ github.ref }} in repo ${{ github.repository }}."}' \
