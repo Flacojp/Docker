@@ -19,6 +19,24 @@ To get started with Docker Compose, follow these steps:
 
 ## Directory Structure
 
-##All changes pushed to flacojp slack
+```
+.
+├── docker-compose.yml
+├── README.md
+└── .github
+    └── workflows
+        └── slack-notify.yaml
+```
 
-self-hosted runner will pick up and clone the repo
+## GitHub Actions
+
+This repository includes a GitHub Actions workflow (`.github/workflows/slack-notify.yaml`) that sends a notification to Slack whenever a push event occurs on any branch.  
+To enable this, set the `SLACK_WEBHOOK_URL` secret in your repository settings.
+
+## Contributing
+
+Feel free to contribute by submitting a pull request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
