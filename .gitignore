@@ -29,3 +29,7 @@ Thumbs.db
 # Backup files
 *.backup
 *.bak
+
+# Trivy scan reports
+trivy-reports/*.json
+trivy-reports/cache/

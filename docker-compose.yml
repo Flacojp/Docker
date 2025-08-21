@@ -1,0 +1,59 @@
+version: "3.8"
+
+# Main Docker Compose file for DevSecOps learning environment
+# This file orchestrates all services from the Apps directory
+
+services:
+  # Homer Dashboard - Web-based service organizer
+  homer:
+    image: b4bz/homer:latest
+    container_name: homer-dashboard
+    volumes:
+      - ./Apps/homer/www:/www/assets
+    ports:
+      - "8080:8080"
+    user: "1000:1000"
+    environment:
+      - INIT_ASSETS=1
+    restart: unless-stopped
+
+  # Plex Media Server
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex-server
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - VERSION=docker
+    volumes:
+      - ./Apps/plex/config:/config
+      - ./Apps/plex/media:/media
+      - ./Apps/plex/transcode:/transcode
+    ports:
+      - "32400:32400"
+    restart: unless-stopped
+
+  # Trivy Security Scanner
+  trivy:
+    image: aquasec/trivy:latest
+    container_name: trivy-scanner
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./trivy-reports:/reports
+    environment:
+      - TRIVY_CACHE_DIR=/reports/cache
+    command: >
+      sh -c "
+        echo 'Starting Trivy security scan...' &&
+        trivy image --severity HIGH,CRITICAL --format json --output /reports/homer-scan.json b4bz/homer:latest &&
+        trivy image --severity HIGH,CRITICAL --format json --output /reports/plex-scan.json lscr.io/linuxserver/plex:latest &&
+        echo 'Security scan completed. Check /reports directory for results.' &&
+        echo 'Scan results:' &&
+        trivy image --severity HIGH,CRITICAL b4bz/homer:latest &&
+        echo '---' &&
+        trivy image --severity HIGH,CRITICAL lscr.io/linuxserver/plex:latest
+      "
+    depends_on:
+      - homer
+      - plex
+    restart: "no"
