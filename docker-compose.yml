@@ -1,42 +1,44 @@
 version: "3.8"
 
 # Main Docker Compose file for DevSecOps learning environment
-# This file orchestrates all services from the Apps directory
+# This file uses environment variables for flexible configuration
 
 services:
   # Homer Dashboard - Web-based service organizer
   homer:
-    image: b4bz/homer:latest
-    container_name: homer-dashboard
+    image: ${HOMER_IMAGE:-b4bz/homer:latest}
+    container_name: ${HOMER_CONTAINER_NAME:-homer-dashboard}
     volumes:
       - ./Apps/homer/www:/www/assets
     ports:
-      - "8080:8080"
-    user: "1000:1000"
+      - "${HOMER_PORT:-8080}:8080"
+    user: "${HOMER_USER_ID:-1000}:${HOMER_GROUP_ID:-1000}"
     environment:
       - INIT_ASSETS=1
+      - TZ=${TZ:-America/New_York}
     restart: unless-stopped
 
   # Plex Media Server
   plex:
-    image: lscr.io/linuxserver/plex:latest
-    container_name: plex-server
+    image: ${PLEX_IMAGE:-lscr.io/linuxserver/plex:latest}
+    container_name: ${PLEX_CONTAINER_NAME:-plex-server}
     environment:
-      - PUID=1000
-      - PGID=1000
+      - PUID=${PLEX_PUID:-1000}
+      - PGID=${PLEX_PGID:-1000}
       - VERSION=docker
+      - TZ=${TZ:-America/New_York}
     volumes:
       - ./Apps/plex/config:/config
       - ./Apps/plex/media:/media
       - ./Apps/plex/transcode:/transcode
     ports:
-      - "32400:32400"
+      - "${PLEX_PORT:-32400}:32400"
     restart: unless-stopped
 
   # Trivy Security Scanner
   trivy:
-    image: aquasec/trivy:latest
-    container_name: trivy-scanner
+    image: ${TRIVY_IMAGE:-aquasec/trivy:latest}
+    container_name: ${TRIVY_CONTAINER_NAME:-trivy-scanner}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./trivy-reports:/reports
@@ -45,13 +47,13 @@ services:
     command: >
       sh -c "
         echo 'Starting Trivy security scan...' &&
-        trivy image --severity HIGH,CRITICAL --format json --output /reports/homer-scan.json b4bz/homer:latest &&
-        trivy image --severity HIGH,CRITICAL --format json --output /reports/plex-scan.json lscr.io/linuxserver/plex:latest &&
+        trivy image --severity ${TRIVY_SEVERITY:-HIGH,CRITICAL} --format json --output /reports/homer-scan.json ${HOMER_IMAGE:-b4bz/homer:latest} &&
+        trivy image --severity ${TRIVY_SEVERITY:-HIGH,CRITICAL} --format json --output /reports/plex-scan.json ${PLEX_IMAGE:-lscr.io/linuxserver/plex:latest} &&
         echo 'Security scan completed. Check /reports directory for results.' &&
         echo 'Scan results:' &&
-        trivy image --severity HIGH,CRITICAL b4bz/homer:latest &&
+        trivy image --severity ${TRIVY_SEVERITY:-HIGH,CRITICAL} ${HOMER_IMAGE:-b4bz/homer:latest} &&
         echo '---' &&
-        trivy image --severity HIGH,CRITICAL lscr.io/linuxserver/plex:latest
+        trivy image --severity ${TRIVY_SEVERITY:-HIGH,CRITICAL} ${PLEX_IMAGE:-lscr.io/linuxserver/plex:latest}
       "
     depends_on:
       - homer

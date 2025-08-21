@@ -9,6 +9,13 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  # Environment variables for the workflow
+  TRIVY_SEVERITY: ${{ secrets.TRIVY_SEVERITY || 'HIGH,CRITICAL' }}
+  TRIVY_VERSION: ${{ secrets.TRIVY_VERSION || '0.22.0' }}
+  DOCKER_COMPOSE_VERSION: ${{ secrets.DOCKER_COMPOSE_VERSION || 'latest' }}
+  SCAN_TIMEOUT: ${{ secrets.SCAN_TIMEOUT || '300' }}
+
 jobs:
   trivy-scan:
     runs-on: ubuntu-latest
@@ -22,7 +29,7 @@ jobs:
 
       - name: Install Docker Compose
         run: |
-          sudo curl -L "https://github.com/docker/compose/releases/download/$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep -Po '"tag_name": "\K.*?(?=")')/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
           docker-compose --version
 
@@ -30,9 +37,18 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget
-          wget https://github.com/aquasecurity/trivy/releases/download/v0.22.0/trivy_0.22.0_Linux-64bit.deb
-          sudo dpkg -i trivy_0.22.0_Linux-64bit.deb
+          wget https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.deb
+          sudo dpkg -i trivy_${TRIVY_VERSION}_Linux-64bit.deb
           trivy --version
+
+      - name: Load environment variables
+        run: |
+          if [ -f .env.example ]; then
+            cp .env.example .env
+            echo "Environment file loaded from .env.example"
+          else
+            echo "No .env.example found, using default values"
+          fi
 
       - name: Find and pull Docker images
         id: pull-images
@@ -46,6 +62,7 @@ jobs:
         shell: /usr/bin/bash -e {0}
 
       - name: Run Trivy scan
+        timeout-minutes: ${{ env.SCAN_TIMEOUT }}
         run: |
           # Find all docker-compose.yml files and scan images
           find . -name 'docker-compose.yml' | while read file; do
@@ -54,7 +71,17 @@ jobs:
             images=$(docker-compose -f $file config | grep 'image:' | awk '{print $2}')
             for image in $images; do
               echo "Scanning $image"
-              trivy image --severity HIGH,CRITICAL $image
+              trivy image --severity ${TRIVY_SEVERITY} $image
             done
           done
         shell: /usr/bin/bash -e {0}
+
+      - name: Upload scan results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: trivy-scan-results
+          path: |
+            trivy-reports/
+            *.json
+          retention-days: 30
