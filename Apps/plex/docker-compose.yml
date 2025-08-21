@@ -1,12 +1,27 @@
----
-version: "2.1"
+version: "3.8"
+
 services:
   plex:
     image: lscr.io/linuxserver/plex:latest
     container_name: plex
-    network_mode: host
     environment:
       - PUID=1000
       - PGID=1000
       - VERSION=docker
+      - TZ=America/New_York
+    volumes:
+      - ./config:/config
+      - ./media:/media
+      - ./transcode:/transcode
+    ports:
+      - "32400:32400"
     restart: unless-stopped
+    networks:
+      - plex_network
+    labels:
+      - "com.docker.compose.project=plex"
+      - "com.docker.compose.service=plex"
+
+networks:
+  plex_network:
+    driver: bridge
